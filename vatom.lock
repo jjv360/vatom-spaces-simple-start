@@ -1,0 +1,15 @@
+{
+  "id": "com.jjv360.simple-start",
+  "name": "Simple Start",
+  "version": "1.0.0",
+  "beta": false,
+  "personalPlugin": true,
+  "description": "Simplified replacement for the Welcome Screen",
+  "longDescription": "This plugin adds extra options to the File > Settings > Welcome Screen list. This replacement start screen shows a simple loading bar, and then enters the space immediately.",
+  "configuration": "After installing the plugin, choose Simple Start from File > Settings > Welcome Screen.",
+  "category": "Styling",
+  "businessId": "cDFoSSRVe4",
+  "price": 0,
+  "releaseNotes": "n/a",
+  "entrypoint": ""
+}

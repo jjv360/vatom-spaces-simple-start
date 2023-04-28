@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Start Bar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+
+<!-- Style -->
+<style>
+
+    /* Main style */
+    html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+        background-color: white;    /* <-- In theory this could be "transparent" to see underneath the loading UI into the app, but that doesn't seem to work currently */
+    }
+    #container {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+    #bar {
+        position: absolute;
+        bottom: 20%;
+        left: calc(50% - 160px);
+        width: 320px;
+        height: 16px;
+        box-sizing: border-box; /* <-- Ensure the border thickness doesn't affect the box size */
+        border: 2px solid #AAA;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    #inner {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 0%;
+        height: 100%;
+        background-color: #AAA;
+    }
+
+    /** Light style */
+    html.light #container {
+        background-color: #FFF;
+    }
+    html.light #bar {
+        border-color: rgb(232, 91, 45);
+    }
+    html.light #inner {
+        background-color: rgb(232, 91, 45);
+    }
+
+</style>
+
+<!-- Container -->
+<div id='container'>
+
+    <!-- Bar -->
+    <div id='bar'>
+        <div id='inner'></div>
+    </div>
+
+</div>
+
+<!-- Code -->
+<script>
+
+    // Apply style depending on the hash (strip the # in the beginning)
+    document.getElementsByTagName('html')[0].className = (location.hash || '').substring(1)
+
+    // Current load progress
+    var animatedPercent = 0
+    var progress = 0
+    var total = 1
+
+    // Called on start
+    window.addEventListener('load', async function() {
+
+        // Start the animation
+        console.debug(`[Simple Start] Starting the animation...`)
+
+        // Get reference to divs
+        let container = document.getElementById('container')
+        let bar = document.getElementById('bar')
+        let inner = document.getElementById('inner')
+
+        // Workaround: No clue why, but the first animation doesn't run unless we wait a bit
+        await new Promise(c => setTimeout(c, 500))
+
+        // Fade the container in
+        container.style.opacity = 1
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Monitor the progress in a loop
+        while (true) {
+
+            // Wait for the next frame
+            await new Promise(resolve => requestAnimationFrame(resolve))
+
+            // Calculate the percentage
+            let percent = Math.floor(progress / total * 100)
+
+            // Stop if unchanged
+            if (percent == animatedPercent)
+                continue
+
+            // Increase the animated percentage
+            if (animatedPercent < percent)
+                animatedPercent += 1
+
+            // Update the bar
+            inner.style.width = `${animatedPercent}%`
+
+            // If complete, stop
+            if (animatedPercent >= 100)
+                break
+
+        }
+
+        // Fade out
+        // container.style.opacity = 0 // <-- Not working, can't see the app behind
+        await new Promise(resolve => setTimeout(resolve, 250))
+
+        // Load complete! Hide this screen
+        console.debug(`[Simple Start] Load complete! Hiding the loader...`)
+        window.parent.postMessage({ action: "hide" }, '*')
+
+    })
+
+    // Add load listener
+    window.addEventListener('message', function(e) {
+
+        // Ignore if not a loading message
+        if (e.data.action != 'loading')
+            return
+
+        // Ignore if already complete
+        if (progress >= total)
+            return
+
+        // Update state
+        total = Math.max(1, e.data.total)   // <-- Prevent a total of 0, just in case
+        progress = e.data.progress
+
+        // Sanity check: If complete, progress should equal total. If not, the bar should not be full.
+        if (e.data.complete)    progress = total
+        else                    progress = Math.min(total - 1, progress)
+
+    })
+
+</script>
+
+</body>
+</html>
