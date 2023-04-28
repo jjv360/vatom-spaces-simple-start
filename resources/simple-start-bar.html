@@ -16,6 +16,8 @@
         margin: 0px;
         padding: 0px;
         background-color: white;    /* <-- In theory this could be "transparent" to see underneath the loading UI into the app, but that doesn't seem to work currently */
+        user-select: none;
+        cursor: default;
     }
     #container {
         position: absolute;
@@ -26,36 +28,35 @@
         background-color: #000;
         opacity: 0;
         transition: opacity 0.5s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
     #bar {
-        position: absolute;
-        bottom: 20%;
-        left: calc(50% - 160px);
-        width: 320px;
-        height: 16px;
-        box-sizing: border-box; /* <-- Ensure the border thickness doesn't affect the box size */
-        border: 2px solid #AAA;
-        border-radius: 8px;
-        overflow: hidden;
+        position: relative;
+        width: 600px;
+        max-width: calc(100% - 40px);
+        height: 2px;
+        background-color: #444;
     }
     #inner {
         position: absolute;
-        top: 0px;
+        top: -1px;
         left: 0px;
         width: 0%;
-        height: 100%;
-        background-color: #AAA;
+        height: 4px;
+        background-color: #00ffff;
+        box-shadow: 0px 0px 16px #00ffff;
     }
-
-    /** Light style */
-    html.light #container {
-        background-color: #FFF;
-    }
-    html.light #bar {
-        border-color: rgb(232, 91, 45);
-    }
-    html.light #inner {
-        background-color: rgb(232, 91, 45);
+    #text-top, #text-bottom {
+        color: #00ffff;
+        font-size: 11px;
+        font-weight: bold;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+        text-align: center;
+        margin: 20px;
+        text-shadow: 0px 0px 16px #00ffff;
     }
 
 </style>
@@ -63,18 +64,21 @@
 <!-- Container -->
 <div id='container'>
 
+    <!-- Top text -->
+    <div id='text-top'>LOADING</div>
+
     <!-- Bar -->
     <div id='bar'>
         <div id='inner'></div>
     </div>
 
+    <!-- Bottom text -->
+    <div id='text-bottom'>0%</div>
+
 </div>
 
 <!-- Code -->
 <script>
-
-    // Apply style depending on the hash (strip the # in the beginning)
-    document.getElementsByTagName('html')[0].className = (location.hash || '').substring(1)
 
     // Current load progress
     var animatedPercent = 0
@@ -91,6 +95,7 @@
         let container = document.getElementById('container')
         let bar = document.getElementById('bar')
         let inner = document.getElementById('inner')
+        let textBottom = document.getElementById('text-bottom')
 
         // Workaround: No clue why, but the first animation doesn't run unless we wait a bit
         await new Promise(c => setTimeout(c, 500))
@@ -108,9 +113,11 @@
             // Calculate the percentage
             let percent = Math.floor(progress / total * 100)
 
-            // Stop if unchanged
-            if (percent == animatedPercent)
+            // Slow down the loop if unchanged, for performance benefits
+            if (percent == animatedPercent) {
+                await new Promise(resolve => setTimeout(resolve, 250))
                 continue
+            }
 
             // Increase the animated percentage
             if (animatedPercent < percent)
@@ -118,6 +125,7 @@
 
             // Update the bar
             inner.style.width = `${animatedPercent}%`
+            textBottom.innerText = `${animatedPercent}%`
 
             // If complete, stop
             if (animatedPercent >= 100)
@@ -127,7 +135,7 @@
 
         // Fade out
         // container.style.opacity = 0 // <-- Not working, can't see the app behind
-        await new Promise(resolve => setTimeout(resolve, 250))
+        await new Promise(resolve => setTimeout(resolve, 50))
 
         // Load complete! Hide this screen
         console.debug(`[Simple Start] Load complete! Hiding the loader...`)
@@ -154,6 +162,19 @@
         if (e.data.complete)    progress = total
         else                    progress = Math.min(total - 1, progress)
 
+    })
+
+    // Add 10-click bypass
+    var lastClick = 0
+    var numClicks = 0
+    window.addEventListener('click', function() {
+        if (Date.now() - lastClick > 1000) numClicks = 0
+        numClicks += 1
+        lastClick = Date.now()
+        if (numClicks >= 10) {
+            console.debug(`[Simple Start] 10 clicks detected, bypassing the loader...`)
+            window.parent.postMessage({ action: "hide" }, '*')
+        }
     })
 
 </script>

@@ -20,19 +20,11 @@ export default class MyPlugin extends BasePlugin {
 
         // Register start screen
         this.menus.register({
-            id: `${this.id}.bar.dark`,
-            title: 'Simple Start - Bar (Dark)',
+            id: `${this.id}.bar`,
+            title: 'Simple Start - Bar',
             section: 'start-screen',
             panel: {
-                iframeURL: this.paths.absolute('simple-start-bar.html') + '#dark'
-            }
-        })
-        this.menus.register({
-            id: `${this.id}.bar.light`,
-            title: 'Simple Start - Bar (Light)',
-            section: 'start-screen',
-            panel: {
-                iframeURL: this.paths.absolute('simple-start-bar.html') + '#light'
+                iframeURL: this.paths.absolute('simple-start-bar.html')
             }
         })
 
